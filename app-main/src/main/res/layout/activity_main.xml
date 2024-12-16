@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+    tools:ignore="HardcodedText">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/btn_av_test"
+            style="@style/Button_Entrance"
+            android:text="AV TestCase" />
+
+        <Button
+            android:id="@+id/btn_av_operation"
+            style="@style/Button_Entrance"
+            android:text="Media API" />
+
+        <Button
+            android:id="@+id/btn_camera"
+            style="@style/Button_Entrance"
+            android:text="Camera Usage" />
+
+        <Button
+            android:id="@+id/btn_player"
+            style="@style/Button_Entrance"
+            android:text="AV Player" />
+
+        <Button
+            android:id="@+id/btn_OpenGL"
+            style="@style/Button_Entrance"
+            android:text="OpenGL ES" />
+
+        <Button
+            android:id="@+id/btn_ffmpeg"
+            style="@style/Button_Entrance"
+            android:text="FFmpeg" />
+
+        <Button
+            android:id="@+id/btn_streaming_media"
+            style="@style/Button_Entrance"
+            android:text="Streaming Media" />
+
+    </LinearLayout>
+
+</ScrollView>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:ignore="HardcodedText">
+
+    <LinearLayout style="@style/LL_Block">
+
+        <TextView
+            style="@style/Text_Label"
+            android:text="投屏研究" />
+
+        <Button
+            android:id="@+id/video_h265_project_screen_sender"
+            style="@style/Button_Entrance"
+            android:text="利用 H265 投屏【投屏端】" />
+
+        <Button
+            android:id="@+id/video_h265_project_screen_receiver"
+            style="@style/Button_Entrance"
+            android:text="利用 H265 投屏【接收端】" />
+
+    </LinearLayout>
+
+    <LinearLayout style="@style/LL_Block">
+
+        <TextView
+            style="@style/Text_Label"
+            android:text="视频通信研究" />
+
+        <Button
+            android:id="@+id/video_h265_share_camera_server"
+            style="@style/Button_Entrance"
+            android:text="利用 H265 视频通信【Server】" />
+
+        <Button
+            android:id="@+id/video_h265_share_camera_client"
+            style="@style/Button_Entrance"
+            android:text="利用 H265 视频通信【Client】" />
+
+    </LinearLayout>
+
+</LinearLayout>

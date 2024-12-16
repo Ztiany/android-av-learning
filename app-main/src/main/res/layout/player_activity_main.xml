@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:ignore="HardcodedText">
+
+    <Button
+        android:id="@+id/player_by_media_player"
+        style="@style/Button_Entrance"
+        android:text="OpenGLES + MediaPlayer" />
+
+    <Button
+        android:id="@+id/player_by_medic_codec"
+        style="@style/Button_Entrance"
+        android:text="MediaExtractor + MediaCodec 渲染视频" />
+
+    <Button
+        android:id="@+id/player_by_medic_codec_egl"
+        style="@style/Button_Entrance"
+        android:text="OpenGLES(EGL) + MediaCodec 渲染视频" />
+
+</LinearLayout>

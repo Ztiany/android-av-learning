@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <Button
+        style="@style/Button_Entrance"
+        android:onClick="connect"
+        android:text="呼叫" />
+
+    <SurfaceView
+        android:id="@+id/video_removeSurfaceView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <me.ztiany.androidav.stream.livecamera.LocalSurfaceView
+        android:id="@+id/video_localSurfaceView"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="10dp" />
+
+</RelativeLayout>

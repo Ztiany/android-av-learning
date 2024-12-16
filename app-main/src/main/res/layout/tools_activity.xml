@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:ignore="HardcodedText">
+
+    <Button
+        android:id="@+id/btn_codec_ability"
+        style="@style/Button_Entrance"
+        android:text="Abilities of Codec" />
+
+    <Button
+        android:id="@+id/btn_metadata_retrieve"
+        style="@style/Button_Entrance"
+        android:text="MediaMetadataRetriever" />
+
+    <Button
+        android:id="@+id/btn_media_extractor_mt"
+        style="@style/Button_Entrance"
+        android:text="Media Extractor MultiThreading" />
+
+    <Button
+        android:id="@+id/btn_media_extractor_aio"
+        style="@style/Button_Entrance"
+        android:text="Media Extractor AllInOne" />
+
+</LinearLayout>

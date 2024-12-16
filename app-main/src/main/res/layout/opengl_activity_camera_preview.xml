@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/opengl_root_fl"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".opengl.jwopengl.usecase.camera.OpenGLCameraPreviewActivity"
+    tools:ignore="HardcodedText">
+
+    <android.opengl.GLSurfaceView
+        android:id="@+id/opengl_camera_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <Button
+        android:id="@+id/opengl_btn_switch"
+        style="@style/Button_Default"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="40dp"
+        android:text="切换" />
+
+</FrameLayout>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/opengl_root_fl"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".opengl.jwopengl.usecase.recorder.OpenGLRecorderActivity"
+    tools:ignore="HardcodedText">
+
+    <android.opengl.GLSurfaceView
+        android:id="@+id/opengl_camera_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:id="@+id/opengl_ll_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <Button
+            android:id="@+id/opengl_btn_switch"
+            style="@style/Button_Default"
+            android:layout_gravity="center_horizontal"
+            android:layout_weight="1"
+            android:width="0dp"
+            android:text="切换摄像头" />
+
+        <Button
+            android:id="@+id/opengl_btn_start"
+            style="@style/Button_Default"
+            android:layout_gravity="center_horizontal"
+            android:layout_weight="1"
+            android:width="0dp"
+            android:text="开始拍摄" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="5dp"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toTopOf="@+id/opengl_ll_bottom">
+
+        <Button
+            android:id="@+id/opengl_btn_speed"
+            style="@style/Button_Default"
+            android:layout_gravity="center_horizontal"
+            android:layout_weight="1"
+            android:width="0dp"
+            android:text="1.0 倍数" />
+
+        <Button
+            android:id="@+id/opengl_btn_effect"
+            style="@style/Button_Default"
+            android:layout_gravity="center_horizontal"
+            android:layout_weight="1"
+            android:width="0dp"
+            android:text="特效切换" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

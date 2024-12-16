@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:ignore="HardcodedText">
+
+    <Button
+        android:id="@+id/audio_select_audio"
+        style="@style/Button_Entrance"
+        android:text="选择音频文件" />
+
+    <TextView
+        android:id="@+id/audio_selected_file"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:gravity="center"
+        android:textColor="@color/black"
+        android:textSize="12sp" />
+
+    <Button
+        android:id="@+id/audio_print_tracks"
+        style="@style/Button_Entrance"
+        android:text="打印媒体信息" />
+
+    <LinearLayout style="@style/LL_Block">
+
+        <TextView
+            style="@style/Text_Label"
+            android:text="PCM" />
+
+        <Button
+            android:id="@+id/audio_play"
+            style="@style/Button_Entrance"
+            android:text="开始播放" />
+
+        <Button
+            android:id="@+id/audio_pause"
+            style="@style/Button_Entrance"
+            android:text="暂停播放" />
+
+        <Button
+            android:id="@+id/audio_resume"
+            style="@style/Button_Entrance"
+            android:text="恢复播放" />
+
+        <Button
+            android:id="@+id/audio_stop"
+            style="@style/Button_Entrance"
+            android:text="停止播放" />
+
+    </LinearLayout>
+
+</LinearLayout>

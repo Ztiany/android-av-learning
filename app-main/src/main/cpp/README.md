@@ -1,0 +1,5 @@
+- ffmpeg version：FFmpeg-n4.2.1
+- x264 version：x264-2020-09-13-d198931
+- fdk-aac version：fdk-aac-2.0.1
+- lame version：3.100
+- openssl version：3.0.0

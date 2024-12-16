@@ -1,0 +1,13 @@
+ext {
+
+    ThirdLibraries = [
+            webSocket: 'org.java-websocket:Java-WebSocket:1.5.3',
+            webRTC   : 'org.webrtc:google-webrtc:1.0.32006',
+            glide    : "com.github.bumptech.glide:glide:4.15.1"
+    ]
+
+    UILibraries = [
+            rangeSeekBar: 'com.github.Jay-Goo:RangeSeekBar:v1.1.0'
+    ]
+
+}

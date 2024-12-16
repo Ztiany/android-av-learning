@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".camera.CameraActivity">
+
+    <Button
+        style="@style/Button_Entrance"
+        android:onClick="camera1"
+        android:text="Camera 1" />
+
+    <Button
+        style="@style/Button_Entrance"
+        android:onClick="camera2"
+        android:text="Camera 2" />
+
+    <Button
+        style="@style/Button_Entrance"
+        android:onClick="camera2Encoding"
+        android:text="Camera 2 Encoding" />
+
+</LinearLayout>
