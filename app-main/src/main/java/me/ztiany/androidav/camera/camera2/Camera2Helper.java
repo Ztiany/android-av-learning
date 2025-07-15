@@ -511,9 +511,31 @@ public class Camera2Helper {
     }
 
     /**
+     * <pre>
+     *     TODO: improve me.
+     * </pre>
      * Configures the necessary {@link Matrix} transformation to `mTextureView`.
-     * This method should be called after the camera preview size is determined in
-     * setUpCameraOutputs and also the size of `mTextureView` is fixed.
+     * This method should be called after the camera preview size is determined and the
+     * size of `mTextureView` is fixed.
+     *
+     * <p>
+     * This method's purpose is to correctly display the camera preview on the screen.
+     * </p>
+     * <p>
+     * It solves two main problems:
+     *
+     * <ol>
+     *     <li>Orientation Mismatch: The camera sensor has a fixed orientation (usually landscape),
+     *     but the phone can be held in any orientation (portrait, landscape, upside down). This
+     *     method applies the necessary rotation to the camera preview so that it appears upright to
+     *     the user. For instance, if the phone is held in portrait (ROTATION_90), it rotates the
+     *     preview stream by -90 or 270 degrees.</li>
+     *     <li>Aspect Ratio Mismatch: The resolution of the camera preview (mPreviewSize) often has
+     *     a different aspect ratio than the TextureView displaying it on the screen. To prevent the
+     *     image from looking stretched or squashed, this method calculates a transformation matrix.
+     *     Specifically, it scales the preview to completely fill the view, which may involve cropping
+     *     parts of the image that don't fit. This is often called a "center-crop" effect.</li>
+     * </ol>
      *
      * @param viewWidth  The width of `mTextureView`
      * @param viewHeight The height of `mTextureView`
