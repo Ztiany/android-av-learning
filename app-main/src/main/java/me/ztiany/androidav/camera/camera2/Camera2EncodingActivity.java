@@ -17,7 +17,7 @@ import me.ztiany.lib.avbase.utils.av.YUVUtils;
 import timber.log.Timber;
 
 
-public class Camera2EncodingActivity extends AppCompatActivity implements ViewTreeObserver.OnGlobalLayoutListener, Camera2Listener {
+public class Camera2EncodingActivity extends AppCompatActivity implements ViewTreeObserver.OnGlobalLayoutListener {
 
     private Camera2Helper camera2Helper;
     private TextureView textureView;
@@ -39,6 +39,39 @@ public class Camera2EncodingActivity extends AppCompatActivity implements ViewTr
 
     private final H264Encoder mH264Encoder = new H264Encoder();
 
+    private final Camera2Listener mCamera2Listener = new Camera2Listener() {
+
+        @Override
+        public void onCameraOpened(CameraDevice cameraDevice, String cameraId, final Size previewSize, final int displayOrientation, boolean isMirror) {
+            Timber.i("onCameraOpened:  previewSize = " + previewSize.getWidth() + "x" + previewSize.getHeight());
+            Camera2EncodingActivity.this.displayOrientation = displayOrientation;
+            Camera2EncodingActivity.this.isMirrorPreview = isMirror;
+            Camera2EncodingActivity.this.openedCameraId = cameraId;
+            mH264Encoder.stop();
+            mH264Encoder.initCodec(previewSize.getWidth(), previewSize.getHeight(), displayOrientation);
+        }
+
+        @Override
+        public void onPreview(final byte[] y, final byte[] u, final byte[] v, final Size previewSize, final int stride) {
+            if (nv21 == null) {
+                nv21 = new byte[previewSize.getWidth() * previewSize.getHeight() * 3 / 2];
+            }
+            YUVUtils.nv21FromYUVCutToWidth(y, u, v, nv21, stride, previewSize.getWidth(), previewSize.getHeight());
+            mH264Encoder.processCamaraData(nv21, previewSize, stride, displayOrientation, isMirrorPreview, openedCameraId);
+        }
+
+        @Override
+        public void onCameraClosed() {
+            Timber.i("onCameraClosed: ");
+        }
+
+        @Override
+        public void onCameraError(Exception e) {
+            Timber.e(e, "onCameraError");
+        }
+
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,7 +88,7 @@ public class Camera2EncodingActivity extends AppCompatActivity implements ViewTr
 
     void initCamera() {
         camera2Helper = new Camera2Helper.Builder()
-                .cameraListener(this)
+                .cameraListener(mCamera2Listener)
                 .maxPreviewSize(new Point(1920, 1080))
                 .minPreviewSize(new Point(1280, 720))
                 .specificCameraId(CAMERA_ID)
@@ -90,35 +123,6 @@ public class Camera2EncodingActivity extends AppCompatActivity implements ViewTr
         if (camera2Helper != null) {
             camera2Helper.start();
         }
-    }
-
-    @Override
-    public void onCameraOpened(CameraDevice cameraDevice, String cameraId, final Size previewSize, final int displayOrientation, boolean isMirror) {
-        Timber.i("onCameraOpened:  previewSize = " + previewSize.getWidth() + "x" + previewSize.getHeight());
-        this.displayOrientation = displayOrientation;
-        this.isMirrorPreview = isMirror;
-        this.openedCameraId = cameraId;
-        mH264Encoder.stop();
-        mH264Encoder.initCodec(previewSize.getWidth(), previewSize.getHeight(), displayOrientation);
-    }
-
-    @Override
-    public void onPreview(final byte[] y, final byte[] u, final byte[] v, final Size previewSize, final int stride) {
-        if (nv21 == null) {
-            nv21 = new byte[previewSize.getWidth() * previewSize.getHeight() * 3 / 2];
-        }
-        YUVUtils.nv21FromYUVCutToWidth(y, u, v, nv21, stride, previewSize.getWidth(), previewSize.getHeight());
-        mH264Encoder.processCamaraData(nv21, previewSize, stride, displayOrientation, isMirrorPreview, openedCameraId);
-    }
-
-    @Override
-    public void onCameraClosed() {
-        Timber.i("onCameraClosed: ");
-    }
-
-    @Override
-    public void onCameraError(Exception e) {
-        e.printStackTrace();
     }
 
     @Override

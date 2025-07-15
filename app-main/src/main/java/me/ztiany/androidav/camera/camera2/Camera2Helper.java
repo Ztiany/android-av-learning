@@ -121,7 +121,7 @@ public class Camera2Helper {
             result = (mSensorOrientation - degrees + 360) % 360;
         }
 
-        Timber.i("getCameraOri: rotation = " + rotation + " result = " + result + " mSensorOrientation = " + mSensorOrientation);
+        Timber.i("getCameraOrientation: rotation = " + rotation + " result = " + result + " mSensorOrientation = " + mSensorOrientation);
         return result;
     }
 

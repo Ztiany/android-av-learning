@@ -106,7 +106,7 @@ public class Camera2Operator implements CameraOperator {
             result = (mSensorOrientation - degrees + 360) % 360;
         }
 
-        Timber.i("getCameraOri: rotation = " + rotation + " result = " + result + " mSensorOrientation = " + mSensorOrientation);
+        Timber.i("getCameraOrientation: rotation = " + rotation + " result = " + result + " mSensorOrientation = " + mSensorOrientation);
         return result;
     }
 
