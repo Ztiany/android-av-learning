@@ -21,8 +21,6 @@ import android.util.Size;
 import android.view.Surface;
 import android.view.TextureView;
 
-import androidx.annotation.NonNull;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import androidx.annotation.NonNull;
 import timber.log.Timber;
 
 public class Camera2Helper {
@@ -511,9 +510,6 @@ public class Camera2Helper {
     }
 
     /**
-     * <pre>
-     *     TODO: improve me.
-     * </pre>
      * Configures the necessary {@link Matrix} transformation to `mTextureView`.
      * This method should be called after the camera preview size is determined and the
      * size of `mTextureView` is fixed.
@@ -549,19 +545,38 @@ public class Camera2Helper {
         RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
         RectF bufferRect = new RectF(0, 0, mPreviewSize.getHeight(), mPreviewSize.getWidth());
 
+        // 将两个矩形的中心重合
         float centerX = viewRect.centerX();
         float centerY = viewRect.centerY();
+        float dx = centerX - bufferRect.centerX();
+        float dy = centerY - bufferRect.centerY();
+        Timber.i("before offset bufferRect: %s", bufferRect);
+
+        // 贴合
+        bufferRect.offset(dx, dy);
+        Timber.i("after offset viewRect: %s", viewRect);
+        Timber.i("after offset bufferRect: %s", bufferRect);
+
+        matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL);
+        float[] values = new float[9];
+        matrix.getValues(values);
+        Timber.i("after setRectToRect: %s", Arrays.toString(values));
+
+        float scale = Math.max((float) viewHeight / mPreviewSize.getHeight(), (float) viewWidth / mPreviewSize.getWidth());
 
         if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {
-            bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY());
-            matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL);
-            float scale = Math.max((float) viewHeight / mPreviewSize.getHeight(), (float) viewWidth / mPreviewSize.getWidth());
+            // 这个缩放是为了预览的图形区域与相机的拍摄的实际区域保持一致。
             matrix.postScale(scale, scale, centerX, centerY);
+            // 处理相机的 Sensor 角度。
             matrix.postRotate((90 * (rotation - 2)) % 360, centerX, centerY);
-            Timber.i("configureTransform when 90/270, scale = %f, rotate = %d", scale, (90 * (rotation - 2)) % 360);
+            Timber.i("configureTransform when 90/270, dx = %f, dy = %f, scale = %f, rotate = %d", dx, dy, scale, (90 * (rotation - 2)) % 360);
         } else if (Surface.ROTATION_180 == rotation) {
+            matrix.postScale(scale, scale, centerX, centerY);
             matrix.postRotate(180, centerX, centerY);
-            Timber.i("configureTransform when 180, rotate = 180");
+            Timber.i("configureTransform when 180, dx = %f, dy = %f, scale = %f, rotate = 180", dx, dy, scale);
+        } else if (Surface.ROTATION_0 == rotation) {
+            matrix.postScale(scale, scale, centerX, centerY);
+            Timber.i("configureTransform when 0, dx = %f, dy = %f, scale = %f, rotate = 0", dx, dy, scale);
         }
 
         Timber.i("configureTransform: " + getCameraOrientation(rotation, mCameraId) + "  " + rotation * 90);
