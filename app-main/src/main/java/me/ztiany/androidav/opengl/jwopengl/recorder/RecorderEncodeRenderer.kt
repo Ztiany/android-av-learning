@@ -1,6 +1,5 @@
 package me.ztiany.androidav.opengl.jwopengl.recorder
 
-import android.media.*
 import android.opengl.EGLContext
 import android.opengl.GLES20
 import android.view.Surface
@@ -14,7 +13,7 @@ import me.ztiany.androidav.opengl.jwopengl.recorder.encoder.Encoder
 import me.ztiany.androidav.opengl.jwopengl.recorder.encoder.EncoderMode
 import timber.log.Timber
 
-/**渲染的是 FBO 中的纹理，使用标准的坐标系*/
+/** 渲染的是 FBO 中的纹理，使用标准的坐标系 */
 class RecorderEncodeRenderer : GLRenderer {
 
     /**CPU 着色器程序*/
@@ -28,6 +27,7 @@ class RecorderEncodeRenderer : GLRenderer {
 
     /**自定义的 EGL 环境*/
     private var eglEnvironment: EGLEnvironment? = null
+
     private var mediaCodecSurfaceProvider: MediaCodecSurfaceProvider? = null
 
     /**编码器*/
@@ -77,10 +77,10 @@ class RecorderEncodeRenderer : GLRenderer {
 
     fun setVideoAttribute(attribute: TextureAttribute) {
         Timber.d("setVideoAttribute() called with: attribute = $attribute")
-        if ((attribute.orientation / 90).mod(2) == 1) {//竖屏
+        if ((attribute.orientation / 90).mod(2) == 1) {// 竖屏
             textureWidth = attribute.height
             textureHeight = attribute.width
-        } else {//横屏
+        } else {// 横屏
             textureWidth = attribute.width
             textureHeight = attribute.height
         }

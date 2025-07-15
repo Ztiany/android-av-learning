@@ -94,7 +94,7 @@ public class Camera2Helper {
         start();
     }
 
-    private int getCameraOri(int rotation, String cameraId) {
+    private int getCameraOrientation(int rotation, String cameraId) {
         int degrees = rotation * 90;
         switch (rotation) {
             case Surface.ROTATION_0:
@@ -128,25 +128,25 @@ public class Camera2Helper {
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
 
         @Override
-        public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
+        public void onSurfaceTextureAvailable(@NonNull SurfaceTexture texture, int width, int height) {
             Timber.i("onSurfaceTextureAvailable: %d, %d", width, height);
             openCamera();
         }
 
         @Override
-        public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
+        public void onSurfaceTextureSizeChanged(@NonNull SurfaceTexture texture, int width, int height) {
             Timber.i("onSurfaceTextureSizeChanged: %d, %d", width, height);
             configureTransform(width, height);
         }
 
         @Override
-        public boolean onSurfaceTextureDestroyed(SurfaceTexture texture) {
+        public boolean onSurfaceTextureDestroyed(@NonNull SurfaceTexture texture) {
             Timber.i("onSurfaceTextureDestroyed: ");
             return true;
         }
 
         @Override
-        public void onSurfaceTextureUpdated(SurfaceTexture texture) {
+        public void onSurfaceTextureUpdated(@NonNull SurfaceTexture texture) {
         }
 
     };
@@ -161,7 +161,7 @@ public class Camera2Helper {
             mCameraDevice = cameraDevice;
             createCameraPreviewSession();
             if (camera2Listener != null) {
-                camera2Listener.onCameraOpened(cameraDevice, mCameraId, mPreviewSize, getCameraOri(rotation, mCameraId), isMirror);
+                camera2Listener.onCameraOpened(cameraDevice, mCameraId, mPreviewSize, getCameraOrientation(rotation, mCameraId), isMirror);
             }
         }
 
@@ -210,7 +210,7 @@ public class Camera2Helper {
                         },
                         mBackgroundHandler);
             } catch (CameraAccessException e) {
-                e.printStackTrace();
+                Timber.e(e, "setRepeatingRequest");
             }
         }
 
@@ -289,7 +289,7 @@ public class Camera2Helper {
             }
         }
 
-        if (sizes.size() == 0) {
+        if (sizes.isEmpty()) {
             String msg = "can not find suitable previewSize, now using default";
             if (camera2Listener != null) {
                 Timber.e(msg);
@@ -378,7 +378,7 @@ public class Camera2Helper {
                 }
             }
         } catch (CameraAccessException e) {
-            e.printStackTrace();
+            Timber.e(e, "setUpCameraOutputs");
         } catch (NullPointerException e) {
             // Currently an NPE is thrown when the Camera2API is used but not supported on the
             // device this code runs.
@@ -400,7 +400,10 @@ public class Camera2Helper {
         mImageReader = ImageReader.newInstance(mPreviewSize.getWidth(), mPreviewSize.getHeight(), ImageFormat.YUV_420_888, 2);
         mImageReader.setOnImageAvailableListener(new OnImageAvailableListenerImpl(), mBackgroundHandler);
 
-        mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+        Integer sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+        if (sensorOrientation != null) {
+            mSensorOrientation = sensorOrientation;
+        }
         mCameraId = cameraId;
         return true;
     }
@@ -414,11 +417,7 @@ public class Camera2Helper {
                 throw new RuntimeException("Time out waiting to lock camera opening.");
             }
             cameraManager.openCamera(mCameraId, mDeviceStateCallback, mBackgroundHandler);
-        } catch (CameraAccessException e) {
-            if (camera2Listener != null) {
-                camera2Listener.onCameraError(e);
-            }
-        } catch (InterruptedException e) {
+        } catch (CameraAccessException | InterruptedException e) {
             if (camera2Listener != null) {
                 camera2Listener.onCameraError(e);
             }
@@ -474,7 +473,7 @@ public class Camera2Helper {
             mBackgroundThread = null;
             mBackgroundHandler = null;
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Timber.e(e, "stopBackgroundThread");
         }
     }
 
@@ -507,7 +506,7 @@ public class Camera2Helper {
                     mBackgroundHandler
             );
         } catch (CameraAccessException e) {
-            e.printStackTrace();
+            Timber.e(e, "createCameraPreviewSession");
         }
     }
 
@@ -543,7 +542,7 @@ public class Camera2Helper {
             Timber.i("configureTransform when 180, rotate = 180");
         }
 
-        Timber.i("configureTransform: " + getCameraOri(rotation, mCameraId) + "  " + rotation * 90);
+        Timber.i("configureTransform: " + getCameraOrientation(rotation, mCameraId) + "  " + rotation * 90);
         mTextureView.setTransform(matrix);
     }
 
@@ -671,6 +670,7 @@ public class Camera2Helper {
             return new Camera2Helper(this);
         }
 
+        @NonNull
         @Override
         public String toString() {
             return "Builder{" +

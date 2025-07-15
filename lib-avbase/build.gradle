@@ -64,8 +64,4 @@ dependencies {
 
     api 'io.github.ztiany:android-media-selector:1.1.0'
     api 'io.github.ztiany:android-arch-delegate:1.0.4'
-
-    //di
-    api "io.insert-koin:koin-core:3.4.2"
-    api "io.insert-koin:koin-android:3.4.2"
 }

@@ -17,7 +17,7 @@ import me.ztiany.androidav.opengl.jwopengl.recorder.filter.ScreenFilter
 import timber.log.Timber
 import java.util.concurrent.CopyOnWriteArrayList
 
-/**录像特效 + 展示*/
+/** 录像特效 + 展示 */
 class RecorderShowRenderer(
     private val context: Context,
     private val eglBridger: EGLBridger

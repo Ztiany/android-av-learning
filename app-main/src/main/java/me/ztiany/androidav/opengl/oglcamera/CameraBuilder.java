@@ -3,17 +3,19 @@ package me.ztiany.androidav.opengl.oglcamera;
 import android.content.Context;
 import android.graphics.Point;
 
+import androidx.annotation.NonNull;
+
 import timber.log.Timber;
 
 public final class CameraBuilder {
 
     /**
-     * 是否镜像显示，只支持textureView
+     * 是否镜像显示，只支持 textureView
      */
     boolean isMirror;
 
     /**
-     * 指定的相机ID
+     * 指定的相机 ID
      */
     String specificCameraId;
 
@@ -28,7 +30,7 @@ public final class CameraBuilder {
     Point previewViewSize;
 
     /**
-     * 传入getWindowManager().getDefaultDisplay().getRotation()的值即可
+     * 传入 getWindowManager().getDefaultDisplay().getRotation() 的值即可
      */
     int rotation;
 
@@ -48,7 +50,7 @@ public final class CameraBuilder {
     Point minPreviewSize;
 
     /**
-     * 上下文，用于获取CameraManager
+     * 上下文，用于获取 CameraManager
      */
     Context context;
 
@@ -126,6 +128,7 @@ public final class CameraBuilder {
         throw new IllegalArgumentException();
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "CameraBuilder{" +

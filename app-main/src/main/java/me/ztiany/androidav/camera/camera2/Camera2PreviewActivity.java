@@ -26,7 +26,8 @@ import me.ztiany.lib.avbase.utils.av.YUVUtils;
 import timber.log.Timber;
 
 /**
- * refer to：<a href='https://github.com/wangshengyang1996/camera2 demo'>Camera2Demo</a> and the <a href='https://blog.csdn.net/aa1540899006/article/details/101896879'>the article</a>
+ * refer to：<a href='https://github.com/wangshengyang1996/camera2 demo'>Camera2Demo</a> and the
+ * <a href='https://blog.csdn.net/aa1540899006/article/details/101896879'>the article</a>
  */
 public class Camera2PreviewActivity extends AppCompatActivity implements ViewTreeObserver.OnGlobalLayoutListener, Camera2Listener {
 
@@ -42,7 +43,7 @@ public class Camera2PreviewActivity extends AppCompatActivity implements ViewTre
     // 默认打开的CAMERA
     private static final String CAMERA_ID = Camera2Helper.CAMERA_ID_BACK;
 
-    // 图像帧数据，全局变量避免反复创建，降低gc频率
+    // 图像帧数据，全局变量避免反复创建，降低 gc 频率
     private byte[] nv21;
 
     // 显示的旋转角度
@@ -51,7 +52,7 @@ public class Camera2PreviewActivity extends AppCompatActivity implements ViewTre
     // 是否手动镜像预览
     private boolean isMirrorPreview;
 
-    // 实际打开的cameraId
+    // 实际打开的 cameraId
     private String openedCameraId;
 
     // 当前获取的帧数
@@ -124,7 +125,7 @@ public class Camera2PreviewActivity extends AppCompatActivity implements ViewTre
         this.isMirrorPreview = isMirror;
         this.openedCameraId = cameraId;
 
-        //在相机打开时，添加右上角的view用于显示原始数据和预览数据
+        //在相机打开时，添加右上角的 view 用于显示原始数据和预览数据
         runOnUiThread(() -> {
 
             ivPreviewFrame = new BorderImageView(Camera2PreviewActivity.this);

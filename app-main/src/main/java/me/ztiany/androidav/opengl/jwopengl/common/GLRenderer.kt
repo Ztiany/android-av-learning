@@ -1,6 +1,6 @@
 package me.ztiany.androidav.opengl.jwopengl.common
 
-/**All the methods in this class will be called in a OpenGL Marked Thread.*/
+/** All the methods in this class will be called in a OpenGL Marked Thread. */
 interface GLRenderer {
 
     /**

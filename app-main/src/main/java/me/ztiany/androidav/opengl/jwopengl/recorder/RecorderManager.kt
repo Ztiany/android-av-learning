@@ -20,6 +20,7 @@ class RecorderManager {
     ///////////////////////////////////////////////////////////////////////////
 
     private lateinit var showRenderer: RecorderShowRenderer
+
     private lateinit var encodeRenderer: RecorderEncodeRenderer
 
     @Volatile var isRecording = false
@@ -33,9 +34,9 @@ class RecorderManager {
         if (!hasInitialized.compareAndSet(false, true)) {
             throw IllegalStateException("Already init.")
         }
-        //decode
+        // encode
         encodeRenderer = RecorderEncodeRenderer()
-        //init the renderer
+        // init the renderer
         showRenderer = RecorderShowRenderer(glSurfaceView.context, object : EGLBridger {
             override fun requestRender() {
                 glSurfaceView.requestRender()
@@ -58,7 +59,7 @@ class RecorderManager {
     fun onCameraAvailable(previewSize: Size, displayOrientation: Int, isFront: Boolean, startPreview: (SurfaceTexture) -> Unit) {
         Timber.d("onCameraAvailable() called with: previewSize = $previewSize, displayOrientation = $displayOrientation, isFront = $isFront")
         checkIfInitialized()
-        //provide the renderers texture the video size.
+        // provide the renderers texture the video size.
         val textureAttribute = TextureAttribute(previewSize.width, previewSize.height, displayOrientation, isFront, false)
         showRenderer.setVideoAttribute(textureAttribute)
         encodeRenderer.setVideoAttribute(textureAttribute)

@@ -121,7 +121,7 @@ class HardEncoder(
                     encodedData.position(bufferInfo.offset)
                     //设置能读数据的总长度
                     encodedData.limit(bufferInfo.offset + bufferInfo.size)
-                    //写出为mp4
+                    //写出为 mp4
                     mediaMuxer.writeSampleData(track, encodedData, bufferInfo)
                 }
 

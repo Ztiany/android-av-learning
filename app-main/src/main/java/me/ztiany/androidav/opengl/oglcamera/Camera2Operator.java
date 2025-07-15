@@ -79,7 +79,7 @@ public class Camera2Operator implements CameraOperator {
         start();
     }
 
-    private int getCameraOri(int rotation, String cameraId) {
+    private int getCameraOrientation(int rotation, String cameraId) {
         int degrees = rotation * 90;
         switch (rotation) {
             case Surface.ROTATION_0:
@@ -115,13 +115,13 @@ public class Camera2Operator implements CameraOperator {
         @Override
         public void onOpened(@NonNull CameraDevice cameraDevice) {
             Timber.i("onOpened: ");
-            // This method is called when the camera is opened.  We start camera preview here.
+            // This method is called when the camera is opened. We start camera preview here.
             mCameraOpenCloseLock.release();
             mCameraDevice = cameraDevice;
 
             if (mCameraListener != null) {
                 ContextCompat.getMainExecutor(context).execute(() ->
-                        mCameraListener.onCameraOpened(new Camera2(mCameraDevice), mCameraId, mPreviewSize, getCameraOri(rotation, mCameraId))
+                        mCameraListener.onCameraOpened(new Camera2(mCameraDevice), mCameraId, mPreviewSize, getCameraOrientation(rotation, mCameraId))
                 );
             }
         }
@@ -177,7 +177,7 @@ public class Camera2Operator implements CameraOperator {
                         },
                         mBackgroundHandler);
             } catch (CameraAccessException e) {
-                e.printStackTrace();
+                Timber.e(e, "setRepeatingRequest");
             }
         }
 
@@ -205,7 +205,7 @@ public class Camera2Operator implements CameraOperator {
         Size defaultSize = sizes.get(0);
         Size[] tempSizes = sizes.toArray(new Size[0]);
 
-        /*降序*/
+        // 降序
         Arrays.sort(tempSizes, (o1, o2) -> {
             if (o1.getWidth() > o2.getWidth()) {
                 return -1;
@@ -239,7 +239,7 @@ public class Camera2Operator implements CameraOperator {
             }
         }
 
-        if (sizes.size() == 0) {
+        if (sizes.isEmpty()) {
             String msg = "can not find suitable previewSize, now using default";
             if (mCameraListener != null) {
                 Timber.e(msg);
@@ -331,7 +331,7 @@ public class Camera2Operator implements CameraOperator {
                 }
             }
         } catch (CameraAccessException e) {
-            e.printStackTrace();
+            Timber.e(e, "setUpCameraOutputs");
         } catch (NullPointerException e) {
             // Currently an NPE is thrown when the Camera2API is used but not supported on the
             // device this code runs.
@@ -348,7 +348,10 @@ public class Camera2Operator implements CameraOperator {
             return false;
         }
         mPreviewSize = getBestSupportedSize(new ArrayList<>(Arrays.asList(map.getOutputSizes(SurfaceTexture.class))));
-        mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+        Integer sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+        if (sensorOrientation != null) {
+            mSensorOrientation = sensorOrientation;
+        }
         mCameraId = cameraId;
         return true;
     }
@@ -413,7 +416,7 @@ public class Camera2Operator implements CameraOperator {
             mBackgroundThread = null;
             mBackgroundHandler = null;
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Timber.e(e, "stopBackgroundThread");
         }
     }
 
@@ -439,7 +442,7 @@ public class Camera2Operator implements CameraOperator {
                     mBackgroundHandler
             );
         } catch (CameraAccessException e) {
-            e.printStackTrace();
+            Timber.e(e, "createCameraPreviewSession");
         }
     }
 

@@ -16,12 +16,15 @@ import me.ztiany.androidav.opengl.oglcamera.CameraOperator
 import me.ztiany.lib.avbase.app.activity.BaseActivity
 import me.ztiany.lib.avbase.utils.Directory
 
-/**RENDERMODE_WHEN_DIRTY 不需要调用 surface 的 onResume/onPause */
+/** RENDERMODE_WHEN_DIRTY 不需要调用 surface 的 onResume/onPause */
 class OpenGLRecorderActivity : BaseActivity<OpenglActivityRecorderBinding>() {
 
     private var cameraOperator: CameraOperator? = null
+
     private val recorderManager = RecorderManager()
+
     private var storePath: String = ""
+
     private var currentSpeed = Speed.MODE_NORMAL
 
     private val allEffect = listOf(

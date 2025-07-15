@@ -158,7 +158,7 @@ class EGLEnvironment(
         }
     }
 
-    /*TODO: optimize the delay time.*/
+    /* TODO: optimize the delay time. */
     private fun checkIfDrawContinuously() {
         if (renderMode == RenderMode.Continuously) {
             eglHandler.sendEmptyMessageDelayed(MSG_RENDERER_DRAW, 16)
