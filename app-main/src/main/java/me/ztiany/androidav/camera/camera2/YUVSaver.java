@@ -8,6 +8,7 @@ import java.io.IOException;
 
 import me.ztiany.lib.avbase.utils.Directory;
 import me.ztiany.lib.avbase.utils.av.YUVUtils;
+import timber.log.Timber;
 
 public class YUVSaver {
 
@@ -20,7 +21,7 @@ public class YUVSaver {
     private byte[] nv12;
     private byte[] nv12_rotated;
 
-    //todo：适配横屏、前置摄像头
+    // TODO：适配横屏、前置摄像头
     public void saveYUV(byte[] y, byte[] u, byte[] v, Size previewSize, int stride, int displayOrientation, boolean isMirrorPreview) {
         int yuvLength = previewSize.getHeight() * previewSize.getWidth() * 3 / 2;
         if (i420 == null || i420.length != yuvLength) {
@@ -54,8 +55,8 @@ public class YUVSaver {
         try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
             fileOutputStream.write(data);
             fileOutputStream.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ioException) {
+            Timber.d(ioException, "save");
         }
     }
 

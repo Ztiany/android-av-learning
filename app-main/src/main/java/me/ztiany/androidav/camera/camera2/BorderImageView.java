@@ -13,6 +13,7 @@ import androidx.appcompat.widget.AppCompatImageView;
 public class BorderImageView extends AppCompatImageView {
 
     private final Paint paint = new Paint();
+
     private Rect mRect;
 
     public BorderImageView(Context context) {

@@ -22,20 +22,32 @@ import timber.log.Timber;
 /**
  * Camera1 API，后置摄像头【测试代码，只支持后置摄像头垂直拍摄】。
  */
-public class Camera1SurfaceView extends SurfaceView implements SurfaceHolder.Callback {
+public class Camera1SurfaceView extends SurfaceView {
 
     private Camera.Size size;
+
     private Camera mCamera;
+
     private volatile boolean isCapture;
 
     public Camera1SurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        getHolder().addCallback(this);
-    }
+        getHolder().addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(@NonNull SurfaceHolder holder) {
+                startPreview();
+            }
 
-    @Override
-    public void surfaceCreated(@NonNull SurfaceHolder holder) {
-        startPreview();
+            @Override
+            public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
+
+            }
+
+            @Override
+            public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+
+            }
+        });
     }
 
     private void startPreview() {
@@ -43,6 +55,7 @@ public class Camera1SurfaceView extends SurfaceView implements SurfaceHolder.Cal
         Camera.Parameters parameters = mCamera.getParameters();
         size = parameters.getPreviewSize();
         Timber.d("size: width = %d, height = %d", size.width, size.height);
+
         try {
             mCamera.setPreviewDisplay(getHolder());
             mCamera.setDisplayOrientation(90);
@@ -59,19 +72,9 @@ public class Camera1SurfaceView extends SurfaceView implements SurfaceHolder.Cal
                 mCamera.addCallbackBuffer(bytes);
             });
             mCamera.startPreview();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ioException) {
+            Timber.e(ioException, "startPreview");
         }
-    }
-
-    @Override
-    public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
-
-    }
-
-    @Override
-    public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
-
     }
 
     public void startCapture() {
@@ -83,15 +86,21 @@ public class Camera1SurfaceView extends SurfaceView implements SurfaceHolder.Cal
         File pictureFile = Directory.createSDCardRootAppTimeNamingPath(Directory.PICTURE_FORMAT_JPEG);
         if (!pictureFile.exists()) {
             try {
-                pictureFile.createNewFile();
+                boolean succeeded = pictureFile.createNewFile();
+                Timber.d("create %s. result: %b", pictureFile.getAbsolutePath(), succeeded);
                 FileOutputStream fileOutputStream = new FileOutputStream(pictureFile);
                 //将 NV21 data 保存成 YuvImage
-                YuvImage image = new YuvImage(temp, ImageFormat.NV21, size.height, size.width, null);
-                //图像压缩
-                // 将 NV21 格式图片，压缩成 Jpeg，并得到 JPEG 数据流。
+                YuvImage image = new YuvImage(
+                        temp,
+                        ImageFormat.NV21,
+                        size.height,
+                        size.width,
+                        null
+                );
+                //图像压缩：将 NV21 格式图片，压缩成 Jpeg，并得到 JPEG 数据流。
                 image.compressToJpeg(new Rect(0, 0, image.getWidth(), image.getHeight()), 100, fileOutputStream);
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (IOException ioException) {
+                Timber.e(ioException, "capture");
             }
         }
     }

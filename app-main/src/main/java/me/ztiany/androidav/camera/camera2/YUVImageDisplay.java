@@ -31,7 +31,6 @@ class YUVImageDisplay {
          showImages(activity, openedCameraId, displayOrientation, isMirrorPreview, ivOriginFrame, ivPreviewFrame, jpgBytes);
      }
 
-    @NotNull
     private static byte[] getARGBBytes(byte[] nv21, int stride, Size previewSize) {
         YuvImage yuvImage = new YuvImage(nv21, ImageFormat.NV21, stride, previewSize.getHeight(), null);
         // ByteArrayOutputStream的close中其实没做任何操作，可不执行。

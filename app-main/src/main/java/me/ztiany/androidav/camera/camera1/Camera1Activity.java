@@ -8,7 +8,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import me.ztiany.androidav.R;
 
 /**
- * get yuv data from back camera.
+ * Get yuv data from back camera by camera1.
  */
 public class Camera1Activity extends AppCompatActivity {
 
