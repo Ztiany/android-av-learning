@@ -94,7 +94,7 @@ public class Camera2Helper {
         start();
     }
 
-    private int getCameraOri(int rotation, String cameraId) {
+    private int getCameraOrientation(int rotation, String cameraId) {
         int degrees = rotation * 90;
         switch (rotation) {
             case Surface.ROTATION_0:
@@ -161,7 +161,7 @@ public class Camera2Helper {
             mCameraDevice = cameraDevice;
             createCameraPreviewSession();
             if (camera2Listener != null) {
-                camera2Listener.onCameraOpened(cameraDevice, mCameraId, mPreviewSize, getCameraOri(rotation, mCameraId), isMirror);
+                camera2Listener.onCameraOpened(cameraDevice, mCameraId, mPreviewSize, getCameraOrientation(rotation, mCameraId), isMirror);
             }
         }
 
@@ -513,8 +513,27 @@ public class Camera2Helper {
 
     /**
      * Configures the necessary {@link Matrix} transformation to `mTextureView`.
-     * This method should be called after the camera preview size is determined in
-     * setUpCameraOutputs and also the size of `mTextureView` is fixed.
+     * This method should be called after the camera preview size is determined and the
+     * size of `mTextureView` is fixed.
+     *
+     * <p>
+     * This method's purpose is to correctly display the camera preview on the screen.
+     * </p>
+     * <p>
+     * It solves two main problems:
+     *
+     * <ol>
+     *     <li>Orientation Mismatch: The camera sensor has a fixed orientation (usually landscape),
+     *     but the phone can be held in any orientation (portrait, landscape, upside down). This
+     *     method applies the necessary rotation to the camera preview so that it appears upright to
+     *     the user. For instance, if the phone is held in portrait (ROTATION_90), it rotates the
+     *     preview stream by -90 or 270 degrees.</li>
+     *     <li>Aspect Ratio Mismatch: The resolution of the camera preview (mPreviewSize) often has
+     *     a different aspect ratio than the TextureView displaying it on the screen. To prevent the
+     *     image from looking stretched or squashed, this method calculates a transformation matrix.
+     *     Specifically, it scales the preview to completely fill the view, which may involve cropping
+     *     parts of the image that don't fit. This is often called a "center-crop" effect.</li>
+     * </ol>
      *
      * @param viewWidth  The width of `mTextureView`
      * @param viewHeight The height of `mTextureView`
@@ -528,22 +547,41 @@ public class Camera2Helper {
         RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
         RectF bufferRect = new RectF(0, 0, mPreviewSize.getHeight(), mPreviewSize.getWidth());
 
+        // 将两个矩形的中心重合
         float centerX = viewRect.centerX();
         float centerY = viewRect.centerY();
+        float dx = centerX - bufferRect.centerX();
+        float dy = centerY - bufferRect.centerY();
+        Timber.i("before offset bufferRect: %s", bufferRect);
+
+        // 贴合
+        bufferRect.offset(dx, dy);
+        Timber.i("after offset viewRect: %s", viewRect);
+        Timber.i("after offset bufferRect: %s", bufferRect);
+
+        matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL);
+        float[] values = new float[9];
+        matrix.getValues(values);
+        Timber.i("after setRectToRect: %s", Arrays.toString(values));
+
+        float scale = Math.max((float) viewHeight / mPreviewSize.getHeight(), (float) viewWidth / mPreviewSize.getWidth());
 
         if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {
-            bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY());
-            matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL);
-            float scale = Math.max((float) viewHeight / mPreviewSize.getHeight(), (float) viewWidth / mPreviewSize.getWidth());
+            // 这个缩放是为了预览的图形区域与相机的拍摄的实际区域保持一致。
             matrix.postScale(scale, scale, centerX, centerY);
+            // 处理相机的 Sensor 角度。
             matrix.postRotate((90 * (rotation - 2)) % 360, centerX, centerY);
-            Timber.i("configureTransform when 90/270, scale = %f, rotate = %d", scale, (90 * (rotation - 2)) % 360);
+            Timber.i("configureTransform when 90/270, dx = %f, dy = %f, scale = %f, rotate = %d", dx, dy, scale, (90 * (rotation - 2)) % 360);
         } else if (Surface.ROTATION_180 == rotation) {
+            matrix.postScale(scale, scale, centerX, centerY);
             matrix.postRotate(180, centerX, centerY);
-            Timber.i("configureTransform when 180, rotate = 180");
+            Timber.i("configureTransform when 180, dx = %f, dy = %f, scale = %f, rotate = 180", dx, dy, scale);
+        } else if (Surface.ROTATION_0 == rotation) {
+            matrix.postScale(scale, scale, centerX, centerY);
+            Timber.i("configureTransform when 0, dx = %f, dy = %f, scale = %f, rotate = 0", dx, dy, scale);
         }
 
-        Timber.i("configureTransform: " + getCameraOri(rotation, mCameraId) + "  " + rotation * 90);
+        Timber.i("configureTransform: " + getCameraOrientation(rotation, mCameraId) + "  " + rotation * 90);
         mTextureView.setTransform(matrix);
     }
 
