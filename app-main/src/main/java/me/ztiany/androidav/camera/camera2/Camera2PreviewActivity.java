@@ -1,8 +1,8 @@
 package me.ztiany.androidav.camera.camera2;
 
+import android.annotation.SuppressLint;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
-import android.graphics.Point;
 import android.hardware.camera2.CameraDevice;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
@@ -22,16 +22,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import me.ztiany.androidav.R;
+import me.ztiany.lib.avbase.camera.camera2.Camera2Presenter;
+import me.ztiany.lib.avbase.camera.camera2.Camera2Listener;
+import me.ztiany.lib.avbase.camera.camera2.CameraId;
+import me.ztiany.lib.avbase.camera.camera2.DefaultSizeSelector;
+import me.ztiany.lib.avbase.camera.camera2.FrameReader;
 import me.ztiany.lib.avbase.utils.av.YUVUtils;
+import me.ztiany.lib.avbase.view.BorderImageView;
 import timber.log.Timber;
 
-/**
- * refer to：<a href='https://github.com/wangshengyang1996/camera2 demo'>Camera2Demo</a> and the
- * <a href='https://blog.csdn.net/aa1540899006/article/details/101896879'>the article</a>
- */
-public class Camera2PreviewActivity extends AppCompatActivity implements ViewTreeObserver.OnGlobalLayoutListener, Camera2Listener {
+public class Camera2PreviewActivity extends AppCompatActivity {
 
-    private Camera2Helper camera2Helper;
+    private Camera2Presenter camera2Presenter;
+
     private TextureView textureView;
 
     // 用于显示原始预览数据
@@ -39,9 +42,6 @@ public class Camera2PreviewActivity extends AppCompatActivity implements ViewTre
 
     // 用于显示和预览画面相同的图像数据
     private ImageView ivPreviewFrame;
-
-    // 默认打开的CAMERA
-    private static final String CAMERA_ID = Camera2Helper.CAMERA_ID_BACK;
 
     // 图像帧数据，全局变量避免反复创建，降低 gc 频率
     private byte[] nv21;
@@ -64,6 +64,8 @@ public class Camera2PreviewActivity extends AppCompatActivity implements ViewTre
     // 线程池
     private ExecutorService imageProcessExecutor;
 
+    private final FrameReader frameReader = new FrameReader();
+
     private final YUVSaver yuvSaver = new YUVSaver();
 
     @Override
@@ -78,33 +80,41 @@ public class Camera2PreviewActivity extends AppCompatActivity implements ViewTre
 
     private void initView() {
         textureView = findViewById(R.id.texture_preview);
-        textureView.getViewTreeObserver().addOnGlobalLayoutListener(this);
+        textureView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                textureView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                initCamera();
+            }
+        });
     }
 
     void initCamera() {
-        camera2Helper = new Camera2Helper.Builder()
-                .cameraListener(this)
-                .maxPreviewSize(new Point(1920, 1080))
-                .minPreviewSize(new Point(1280, 720))
-                .specificCameraId(CAMERA_ID)
+        frameReader.setFrameListener(this::showPreview);
+
+        camera2Presenter = new Camera2Presenter.Builder()
+                .cameraListener(mCamera2Listener)
+                .sizeSelector(
+                        DefaultSizeSelector.newBuilder()
+                                .maxPreviewSize(new Size(1920, 1080))
+                                .minPreviewSize(new Size(0, 0))
+                                .previewViewSize(new Size(textureView.getWidth(), textureView.getHeight()))
+                                .build()
+                )
+                .cameraId(CameraId.BACK)
                 .context(getApplicationContext())
                 .previewOn(textureView)
-                .previewViewSize(new Point(textureView.getWidth(), textureView.getHeight()))
+                .outputProvider(frameReader)
                 .rotation(getWindowManager().getDefaultDisplay().getRotation())
                 .build();
-        camera2Helper.start();
-    }
 
-    @Override
-    public void onGlobalLayout() {
-        textureView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-        initCamera();
+        camera2Presenter.start();
     }
 
     @Override
     protected void onPause() {
-        if (camera2Helper != null) {
-            camera2Helper.stop();
+        if (camera2Presenter != null) {
+            camera2Presenter.stop();
         }
         super.onPause();
     }
@@ -112,63 +122,99 @@ public class Camera2PreviewActivity extends AppCompatActivity implements ViewTre
     @Override
     protected void onResume() {
         super.onResume();
-        if (camera2Helper != null) {
-            camera2Helper.start();
+        if (camera2Presenter != null) {
+            camera2Presenter.start();
         }
     }
 
     @Override
-    public void onCameraOpened(CameraDevice cameraDevice, String cameraId, final Size previewSize, final int displayOrientation, boolean isMirror) {
-        Timber.i("onCameraOpened:  previewSize = " + previewSize.getWidth() + "x" + previewSize.getHeight());
-
-        this.displayOrientation = displayOrientation;
-        this.isMirrorPreview = isMirror;
-        this.openedCameraId = cameraId;
-
-        //在相机打开时，添加右上角的 view 用于显示原始数据和预览数据
-        runOnUiThread(() -> {
-
-            ivPreviewFrame = new BorderImageView(Camera2PreviewActivity.this);
-            ivOriginFrame = new BorderImageView(Camera2PreviewActivity.this);
-            TextView tvPreview = new TextView(Camera2PreviewActivity.this);
-            TextView tvOrigin = new TextView(Camera2PreviewActivity.this);
-            tvPreview.setTextColor(Color.WHITE);
-            tvOrigin.setTextColor(Color.WHITE);
-            tvPreview.setText("preview");
-            tvOrigin.setText("origin");
-            boolean needRotate = displayOrientation % 180 != 0;
-            DisplayMetrics displayMetrics = new DisplayMetrics();
-            getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-
-            int longSide = displayMetrics.widthPixels > displayMetrics.heightPixels ? displayMetrics.widthPixels : displayMetrics.heightPixels;
-            int shortSide = displayMetrics.widthPixels < displayMetrics.heightPixels ? displayMetrics.widthPixels : displayMetrics.heightPixels;
-
-            FrameLayout.LayoutParams previewLayoutParams = new FrameLayout.LayoutParams(
-                    !needRotate ? longSide / 4 : shortSide / 4,
-                    needRotate ? longSide / 4 : shortSide / 4
-            );
-
-            FrameLayout.LayoutParams originLayoutParams = new FrameLayout.LayoutParams(
-                    longSide / 4, shortSide / 4
-            );
-
-            previewLayoutParams.gravity = Gravity.END | Gravity.TOP;
-            originLayoutParams.gravity = Gravity.END | Gravity.TOP;
-            previewLayoutParams.topMargin = originLayoutParams.height;
-            ivPreviewFrame.setLayoutParams(previewLayoutParams);
-            tvPreview.setLayoutParams(previewLayoutParams);
-            ivOriginFrame.setLayoutParams(originLayoutParams);
-            tvOrigin.setLayoutParams(originLayoutParams);
-
-            ((FrameLayout) textureView.getParent()).addView(ivPreviewFrame);
-            ((FrameLayout) textureView.getParent()).addView(ivOriginFrame);
-            ((FrameLayout) textureView.getParent()).addView(tvPreview);
-            ((FrameLayout) textureView.getParent()).addView(tvOrigin);
-        });
+    protected void onDestroy() {
+        if (imageProcessExecutor != null) {
+            imageProcessExecutor.shutdown();
+            imageProcessExecutor = null;
+        }
+        if (camera2Presenter != null) {
+            camera2Presenter.release();
+        }
+        super.onDestroy();
     }
 
-    @Override
-    public void onPreview(final byte[] y, final byte[] u, final byte[] v, final Size previewSize, final int stride) {
+    public void switchCamera(View view) {
+        if (camera2Presenter != null) {
+            camera2Presenter.switchCamera();
+        }
+    }
+
+    private final Camera2Listener mCamera2Listener = new Camera2Listener() {
+
+        @SuppressLint("SetTextI18n")
+        @Override
+        public void onCameraOpened(
+                CameraDevice cameraDevice,
+                String cameraId,
+                final Size previewSize,
+                final int orientation,
+                boolean isMirror
+        ) {
+            Timber.i("onCameraOpened:  previewSize = " + previewSize.getWidth() + "x" + previewSize.getHeight());
+
+            Camera2PreviewActivity.this.displayOrientation = orientation;
+            Camera2PreviewActivity.this.isMirrorPreview = isMirror;
+            Camera2PreviewActivity.this.openedCameraId = cameraId;
+
+            //在相机打开时，添加右上角的 view 用于显示原始数据和预览数据
+            runOnUiThread(() -> {
+                ivPreviewFrame = new BorderImageView(Camera2PreviewActivity.this);
+                ivOriginFrame = new BorderImageView(Camera2PreviewActivity.this);
+                TextView tvPreview = new TextView(Camera2PreviewActivity.this);
+                TextView tvOrigin = new TextView(Camera2PreviewActivity.this);
+                tvPreview.setTextColor(Color.WHITE);
+                tvOrigin.setTextColor(Color.WHITE);
+                tvPreview.setText("preview");
+                tvOrigin.setText("origin");
+                boolean needRotate = orientation % 180 != 0;
+                DisplayMetrics displayMetrics = new DisplayMetrics();
+                getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+
+                int longSide = Math.max(displayMetrics.widthPixels, displayMetrics.heightPixels);
+                int shortSide = Math.min(displayMetrics.widthPixels, displayMetrics.heightPixels);
+
+                FrameLayout.LayoutParams previewLayoutParams = new FrameLayout.LayoutParams(
+                        !needRotate ? longSide / 4 : shortSide / 4,
+                        needRotate ? longSide / 4 : shortSide / 4
+                );
+
+                FrameLayout.LayoutParams originLayoutParams = new FrameLayout.LayoutParams(
+                        longSide / 4, shortSide / 4
+                );
+
+                previewLayoutParams.gravity = Gravity.END | Gravity.TOP;
+                originLayoutParams.gravity = Gravity.END | Gravity.TOP;
+                previewLayoutParams.topMargin = originLayoutParams.height;
+                ivPreviewFrame.setLayoutParams(previewLayoutParams);
+                tvPreview.setLayoutParams(previewLayoutParams);
+                ivOriginFrame.setLayoutParams(originLayoutParams);
+                tvOrigin.setLayoutParams(originLayoutParams);
+
+                ((FrameLayout) textureView.getParent()).addView(ivPreviewFrame);
+                ((FrameLayout) textureView.getParent()).addView(ivOriginFrame);
+                ((FrameLayout) textureView.getParent()).addView(tvPreview);
+                ((FrameLayout) textureView.getParent()).addView(tvOrigin);
+            });
+        }
+
+        @Override
+        public void onCameraClosed() {
+            Timber.i("onCameraClosed: ");
+        }
+
+        @Override
+        public void onCameraError(Exception exception) {
+            Timber.e(exception, "onCameraError");
+        }
+    };
+
+    private void showPreview(final byte[] y, final byte[] u, final byte[] v, final Size previewSize, final int stride) {
         if (currentIndex++ % PROCESS_INTERVAL == 0) {
             imageProcessExecutor.execute(() -> {
                 if (nv21 == null) {
@@ -190,34 +236,6 @@ public class Camera2PreviewActivity extends AppCompatActivity implements ViewTre
                         ivPreviewFrame
                 );
             });
-        }
-    }
-
-    @Override
-    public void onCameraClosed() {
-        Timber.i("onCameraClosed: ");
-    }
-
-    @Override
-    public void onCameraError(Exception e) {
-        e.printStackTrace();
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (imageProcessExecutor != null) {
-            imageProcessExecutor.shutdown();
-            imageProcessExecutor = null;
-        }
-        if (camera2Helper != null) {
-            camera2Helper.release();
-        }
-        super.onDestroy();
-    }
-
-    public void switchCamera(View view) {
-        if (camera2Helper != null) {
-            camera2Helper.switchCamera();
         }
     }
 

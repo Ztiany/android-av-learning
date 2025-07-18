@@ -5,6 +5,7 @@ import android.hardware.camera2.CameraCaptureSession;
 import android.media.Image;
 import android.media.ImageReader;
 import android.util.Size;
+import android.view.Surface;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,13 +23,9 @@ public class FrameReader implements OutputProvider {
     @Nullable
     private FrameListener mFrameListener;
 
-    private Camera2Handle mCamera2Handle;
-
     @Override
     public void onAttach(@NonNull Camera2Handle camera2Handle, @NonNull Components components) {
-        mCamera2Handle = camera2Handle;
-
-        mFrameSize = components.require(PREVIEW);
+        mFrameSize = components.require(PREVIEW_SIZE);
 
         mImageReader = ImageReader.newInstance(
                 mFrameSize.getWidth(),
@@ -38,6 +35,12 @@ public class FrameReader implements OutputProvider {
         );
 
         mImageReader.setOnImageAvailableListener(new OnImageAvailableListenerImpl(), components.require(WORKER));
+    }
+
+    @Nullable
+    @Override
+    public Surface provideSurface() {
+        return mImageReader.getSurface();
     }
 
     @Override
@@ -106,28 +109,6 @@ public class FrameReader implements OutputProvider {
 
     public void setFrameListener(@Nullable FrameListener frameListener) {
         mFrameListener = frameListener;
-    }
-
-    public void start(StartCallback startCallback) {
-        mCamera2Handle.startCapturingCameraSession(mImageReader.getSurface(), new CameraCaptureSession.StateCallback() {
-            @Override
-            public void onConfigured(@NonNull CameraCaptureSession session) {
-                if (startCallback != null) {
-                    startCallback.onResult(true);
-                }
-            }
-
-            @Override
-            public void onConfigureFailed(@NonNull CameraCaptureSession session) {
-                if (startCallback != null) {
-                    startCallback.onResult(false);
-                }
-            }
-        });
-    }
-
-    public interface StartCallback {
-        void onResult(boolean succeeded);
     }
 
 }

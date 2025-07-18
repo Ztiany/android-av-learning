@@ -26,7 +26,7 @@ import java.util.List;
 
 import me.ztiany.androidav.R;
 import me.ztiany.lib.avbase.camera.camera2.Camera2Presenter;
-import me.ztiany.lib.avbase.camera.camera2.Camera2PresenterListener;
+import me.ztiany.lib.avbase.camera.camera2.Camera2Listener;
 import me.ztiany.lib.avbase.camera.camera2.CameraId;
 import me.ztiany.lib.avbase.camera.camera2.DefaultSizeSelector;
 import me.ztiany.lib.avbase.camera.camera2.MediaRecorderProvider;
@@ -74,7 +74,7 @@ public class FloatingCameraService extends Service {
         }
     };
 
-    private final Camera2PresenterListener mCamera2Listener = new Camera2PresenterListener() {
+    private final Camera2Listener mCamera2Listener = new Camera2Listener() {
 
         @Override
         public void onCameraOpened(CameraDevice cameraDevice, String cameraId, final Size previewSize, final int displayOrientation, boolean isMirror) {
@@ -175,7 +175,7 @@ public class FloatingCameraService extends Service {
             mCamera2Helper = new Camera2Presenter.Builder()
                     .context(getApplicationContext())
                     .cameraListener(mCamera2Listener)
-                    .specificCameraId(CameraId.BACK)
+                    .cameraId(CameraId.BACK)
                     .previewOn(mTextureView)
                     .outputProvider(mMediaRecorderProvider)
                     .sizeSelector(

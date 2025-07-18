@@ -4,7 +4,7 @@ package me.ztiany.lib.avbase.camera.camera2;
 import android.hardware.camera2.CameraDevice;
 import android.util.Size;
 
-public interface Camera2PresenterListener {
+public interface Camera2Listener {
 
     /**
      * 当打开时执行。

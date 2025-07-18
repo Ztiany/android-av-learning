@@ -1,4 +1,4 @@
-package me.ztiany.androidav.camera.camera2;
+package me.ztiany.lib.avbase.view;
 
 import android.content.Context;
 import android.graphics.Canvas;

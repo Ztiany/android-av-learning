@@ -16,6 +16,7 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.text.TextUtils;
 import android.util.Size;
 import android.view.Surface;
 import android.view.TextureView;
@@ -52,9 +53,13 @@ public class Camera2Presenter {
     @CameraId
     private String mSpecifiedCameraId;
 
-    private Camera2PresenterListener mCamera2PresenterListener;
+    private final CameraSelector mCameraSelector;
+
+    private Camera2Listener mCamera2Listener;
 
     private TextureView mTextureView;
+
+    private final boolean mFitPreview;
 
     private Context mContext;
 
@@ -69,14 +74,17 @@ public class Camera2Presenter {
     private CameraDevice mCameraDevice;
 
     private Camera2Presenter(Builder builder) {
-        mTextureView = builder.previewDisplayView;
+        mTextureView = builder.previewView;
+        mFitPreview = builder.fitPreview;
+
         mSpecifiedCameraId = builder.specifiedCameraId;
+        mCameraSelector = builder.cameraSelector;
 
         mRotation = builder.rotation;
         mIsMirror = builder.isMirror;
 
         mOutputProvider = builder.outputProvider;
-        mCamera2PresenterListener = builder.mCamera2PresenterListener;
+        mCamera2Listener = builder.mCamera2Listener;
         mSizeSelector = builder.sizeSelector;
 
         mContext = builder.context;
@@ -167,8 +175,14 @@ public class Camera2Presenter {
             // This method is called when the camera is opened. We start camera preview here.
             mCameraDevice = cameraDevice;
             createPreviewSession(null, null);
-            if (mCamera2PresenterListener != null) {
-                mCamera2PresenterListener.onCameraOpened(cameraDevice, mCameraId, mPreviewSize, getCameraOrientation(mRotation, mCameraId), mIsMirror);
+            if (mCamera2Listener != null) {
+                mCamera2Listener.onCameraOpened(
+                        cameraDevice,
+                        mCameraId,
+                        mPreviewSize,
+                        getCameraOrientation(mRotation, mCameraId),
+                        mIsMirror
+                );
             }
         }
 
@@ -181,8 +195,8 @@ public class Camera2Presenter {
             closeCameraSession();
             closeCameraDevice();
 
-            if (mCamera2PresenterListener != null) {
-                mCamera2PresenterListener.onCameraClosed();
+            if (mCamera2Listener != null) {
+                mCamera2Listener.onCameraClosed();
             }
         }
 
@@ -195,8 +209,8 @@ public class Camera2Presenter {
             closeCameraSession();
             closeCameraDevice();
 
-            if (mCamera2PresenterListener != null) {
-                mCamera2PresenterListener.onCameraError(new Exception("error occurred, code is " + error));
+            if (mCamera2Listener != null) {
+                mCamera2Listener.onCameraError(new Exception("error occurred, code is " + error));
             }
         }
 
@@ -271,35 +285,53 @@ public class Camera2Presenter {
     public void release() {
         stop();
         mTextureView = null;
-        mCamera2PresenterListener = null;
+        mCamera2Listener = null;
         mContext = null;
     }
 
-    private void setUpCameraOutputs(CameraManager cameraManager) {
+    private boolean setUpCameraOutputs(CameraManager cameraManager) {
         try {
-            if (configCameraParams(cameraManager, mSpecifiedCameraId)) {
-                return;
+            if (mCameraSelector != null) {
+                String[] cameraIdList = cameraManager.getCameraIdList();
+                String targetId = mCameraSelector.selectCamera(Arrays.asList(cameraIdList));
+                if (configCameraParams(cameraManager, targetId)) {
+                    return true;
+                }
+            }
+
+            if (!TextUtils.isEmpty(mSpecifiedCameraId) && configCameraParams(cameraManager, mSpecifiedCameraId)) {
+                return true;
             }
             for (String cameraId : cameraManager.getCameraIdList()) {
                 if (configCameraParams(cameraManager, cameraId)) {
-                    return;
+                    return true;
                 }
             }
-        } catch (CameraAccessException cameraAccessException) {
-            Timber.e(cameraAccessException, "setUpCameraOutputs");
-        } catch (NullPointerException e) {
+        } catch (CameraAccessException | IllegalArgumentException exception) {
+            Timber.e(exception, "setUpCameraOutputs");
+            if (mCamera2Listener != null) {
+                mCamera2Listener.onCameraError(exception);
+            }
+        } catch (NullPointerException nullPointerException) {
+            Timber.e(nullPointerException, "setUpCameraOutputs");
             // Currently an NPE is thrown when the Camera2API is used but not supported on the
             // device this code runs.
-            if (mCamera2PresenterListener != null) {
-                mCamera2PresenterListener.onCameraError(e);
+            if (mCamera2Listener != null) {
+                mCamera2Listener.onCameraError(nullPointerException);
             }
         }
+        return false;
     }
 
-    private boolean configCameraParams(CameraManager manager, @CameraId String cameraId) throws CameraAccessException {
+    private boolean configCameraParams(
+            CameraManager manager,
+            @CameraId String cameraId
+    ) throws CameraAccessException, IllegalArgumentException {
         CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
 
-        StreamConfigurationMap configurationMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        StreamConfigurationMap configurationMap = characteristics.get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
+        );
         if (configurationMap == null) {
             return false;
         }
@@ -316,7 +348,7 @@ public class Camera2Presenter {
             mOutputProvider.onAttach(mCamera2Handle, new OutputProvider.Components() {
                 {
                     put(OutputProvider.ORIENTATION, getCameraOrientation(mRotation, cameraId));
-                    put(OutputProvider.PREVIEW, mPreviewSize);
+                    put(OutputProvider.PREVIEW_SIZE, mPreviewSize);
                     put(OutputProvider.WORKER, mBackgroundHandler);
                     put(OutputProvider.STREAM_CONFIGURATION, configurationMap);
                 }
@@ -337,12 +369,20 @@ public class Camera2Presenter {
                 Timber.e("Time out waiting to lock camera opening.");
                 return;
             }
-            setUpCameraOutputs(cameraManager);
-            configureTransform(mTextureView.getWidth(), mTextureView.getHeight());
-            cameraManager.openCamera(mCameraId, mDeviceStateCallback, mBackgroundHandler);
-        } catch (CameraAccessException | InterruptedException e) {
-            if (mCamera2PresenterListener != null) {
-                mCamera2PresenterListener.onCameraError(e);
+            if (setUpCameraOutputs(cameraManager)) {
+                configureTransform(mTextureView.getWidth(), mTextureView.getHeight());
+                cameraManager.openCamera(mCameraId, mDeviceStateCallback, mBackgroundHandler);
+            }
+        } catch (CameraAccessException | SecurityException | IllegalArgumentException exception) {
+            Timber.e(exception, "openCamera");
+            mCameraOpenCloseLock.release();
+            if (mCamera2Listener != null) {
+                mCamera2Listener.onCameraError(exception);
+            }
+        } catch (InterruptedException exception) {
+            Timber.e(exception, "openCamera");
+            if (mCamera2Listener != null) {
+                mCamera2Listener.onCameraError(exception);
             }
         }
     }
@@ -363,12 +403,12 @@ public class Camera2Presenter {
 
             closeCameraDevice();
 
-            if (mCamera2PresenterListener != null) {
-                mCamera2PresenterListener.onCameraClosed();
+            if (mCamera2Listener != null) {
+                mCamera2Listener.onCameraClosed();
             }
         } catch (InterruptedException e) {
-            if (mCamera2PresenterListener != null) {
-                mCamera2PresenterListener.onCameraError(e);
+            if (mCamera2Listener != null) {
+                mCamera2Listener.onCameraError(e);
             }
         } finally {
             mCameraOpenCloseLock.release();
@@ -428,8 +468,16 @@ public class Camera2Presenter {
 
             List<Surface> targets = new ArrayList<>();
             targets.add(surface);
+            // added through CameraHandle
             if (outputSurface != null) {
                 targets.add(outputSurface);
+            }
+            // added through provideSurface
+            if (mOutputProvider != null) {
+                Surface providedSurface = mOutputProvider.provideSurface();
+                if (providedSurface != null) {
+                    targets.add(providedSurface);
+                }
             }
 
             for (Surface target : targets) {
@@ -455,8 +503,8 @@ public class Camera2Presenter {
                 public void onConfigureFailed(@NonNull CameraCaptureSession session) {
                     Timber.d("StateCallback.onConfigureFailed()");
 
-                    if (mCamera2PresenterListener != null) {
-                        mCamera2PresenterListener.onCameraError(new Exception("configureFailed"));
+                    if (mCamera2Listener != null) {
+                        mCamera2Listener.onCameraError(new Exception("configureFailed"));
                     }
 
                     if (callback != null) {
@@ -544,6 +592,10 @@ public class Camera2Presenter {
         if (null == mTextureView || null == mPreviewSize) {
             return;
         }
+        if (!mFitPreview) {
+            Timber.w("configureTransform is disabled!");
+            return;
+        }
 
         Matrix matrix = new Matrix();
         RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
@@ -592,7 +644,17 @@ public class Camera2Presenter {
         /**
          * 预览显示的 view，目前仅支持 textureView。
          */
-        private TextureView previewDisplayView;
+        private TextureView previewView;
+
+        /**
+         * transform preview so it correctly displays the camera preview on the screen.
+         */
+        private boolean fitPreview = true;
+
+        /**
+         * 相机选择器。
+         */
+        private CameraSelector cameraSelector;
 
         /**
          * 指定的相机 ID。
@@ -603,7 +665,7 @@ public class Camera2Presenter {
         /**
          * 事件回调
          */
-        private Camera2PresenterListener mCamera2PresenterListener;
+        private Camera2Listener mCamera2Listener;
 
         private OutputProvider outputProvider;
 
@@ -613,7 +675,12 @@ public class Camera2Presenter {
         }
 
         public Builder previewOn(TextureView textureView) {
-            this.previewDisplayView = textureView;
+            this.previewView = textureView;
+            return this;
+        }
+
+        public Builder fitPreview(boolean fitPreview) {
+            this.fitPreview = fitPreview;
             return this;
         }
 
@@ -627,13 +694,18 @@ public class Camera2Presenter {
             return this;
         }
 
-        public Builder specificCameraId(@CameraId String cameraId) {
+        public Builder cameraId(@CameraId String cameraId) {
             this.specifiedCameraId = cameraId;
             return this;
         }
 
-        public Builder cameraListener(Camera2PresenterListener val) {
-            this.mCamera2PresenterListener = val;
+        public Builder cameraSelector(CameraSelector cameraSelector) {
+            this.cameraSelector = cameraSelector;
+            return this;
+        }
+
+        public Builder cameraListener(Camera2Listener val) {
+            this.mCamera2Listener = val;
             return this;
         }
 
@@ -653,13 +725,13 @@ public class Camera2Presenter {
         }
 
         public Camera2Presenter build() {
-            if (mCamera2PresenterListener == null) {
+            if (mCamera2Listener == null) {
                 Timber.w("camera2Listener is null, callback will not be called!");
             }
             if (sizeSelector == null) {
                 throw new NullPointerException("you must provide a sizeSelector!");
             }
-            if (previewDisplayView == null) {
+            if (previewView == null) {
                 throw new NullPointerException("you must preview on a textureView or a surfaceView!");
             }
             return new Camera2Presenter(this);
@@ -669,7 +741,7 @@ public class Camera2Presenter {
         @Override
         public String toString() {
             return "Builder{" +
-                    "previewDisplayView=" + previewDisplayView +
+                    "previewDisplayView=" + previewView +
                     ", isMirror=" + isMirror +
                     ", specificCameraId='" + specifiedCameraId + '\'' +
                     ", rotation=" + rotation +

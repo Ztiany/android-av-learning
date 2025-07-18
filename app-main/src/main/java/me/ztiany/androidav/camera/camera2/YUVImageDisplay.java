@@ -14,22 +14,24 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
 
+import me.ztiany.lib.avbase.camera.camera2.CameraId;
+
 class YUVImageDisplay {
 
-     static void showYUVImage(
-             Activity activity,
-             byte[] nv21,
-             int stride,
-             Size previewSize,
-             String openedCameraId,
-             int displayOrientation,
-             boolean isMirrorPreview,
-             ImageView ivOriginFrame,
-             ImageView ivPreviewFrame
-     ) {
-         byte[] jpgBytes = getARGBBytes(nv21, stride, previewSize);
-         showImages(activity, openedCameraId, displayOrientation, isMirrorPreview, ivOriginFrame, ivPreviewFrame, jpgBytes);
-     }
+    static void showYUVImage(
+            Activity activity,
+            byte[] nv21,
+            int stride,
+            Size previewSize,
+            String openedCameraId,
+            int displayOrientation,
+            boolean isMirrorPreview,
+            ImageView ivOriginFrame,
+            ImageView ivPreviewFrame
+    ) {
+        byte[] jpgBytes = getARGBBytes(nv21, stride, previewSize);
+        showImages(activity, openedCameraId, displayOrientation, isMirrorPreview, ivOriginFrame, ivPreviewFrame, jpgBytes);
+    }
 
     private static byte[] getARGBBytes(byte[] nv21, int stride, Size previewSize) {
         YuvImage yuvImage = new YuvImage(nv21, ImageFormat.NV21, stride, previewSize.getHeight(), null);
@@ -60,10 +62,10 @@ class YUVImageDisplay {
         //预览相对于原数据需要进行修正【因为摄像头的方向问题】
         Matrix matrix = new Matrix();
         // 预览相对于原数据可能有旋转
-        matrix.postRotate(Camera2Helper.CAMERA_ID_BACK.equals(openedCameraId) ? displayOrientation : -displayOrientation);
+        matrix.postRotate(CameraId.BACK.equals(openedCameraId) ? displayOrientation : -displayOrientation);
 
         // 对于前置数据，镜像处理；若手动设置镜像预览，则镜像处理；若都有，则不需要镜像处理
-        if (Camera2Helper.CAMERA_ID_FRONT.equals(openedCameraId) ^ isMirrorPreview) {
+        if (CameraId.FRONT.equals(openedCameraId) ^ isMirrorPreview) {
             matrix.postScale(-1, 1);
         }
         // 和预览画面相同的bitmap
