@@ -475,7 +475,7 @@ public class Camera2Presenter {
             // added through provideSurface
             if (mOutputProvider != null) {
                 Surface providedSurface = mOutputProvider.provideSurface();
-                if (providedSurface != null) {
+                if (providedSurface != null && !targets.contains(providedSurface)) {
                     targets.add(providedSurface);
                 }
             }
