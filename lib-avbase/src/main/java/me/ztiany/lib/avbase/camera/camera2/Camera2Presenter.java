@@ -372,6 +372,8 @@ public class Camera2Presenter {
             if (setUpCameraOutputs(cameraManager)) {
                 configureTransform(mTextureView.getWidth(), mTextureView.getHeight());
                 cameraManager.openCamera(mCameraId, mDeviceStateCallback, mBackgroundHandler);
+            }else {
+                mCameraOpenCloseLock.release();
             }
         } catch (CameraAccessException | SecurityException | IllegalArgumentException exception) {
             Timber.e(exception, "openCamera");
