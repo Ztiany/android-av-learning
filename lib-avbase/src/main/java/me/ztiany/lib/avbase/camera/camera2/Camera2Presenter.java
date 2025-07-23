@@ -194,10 +194,6 @@ public class Camera2Presenter {
 
             closeCameraSession();
             closeCameraDevice();
-
-            if (mCamera2Listener != null) {
-                mCamera2Listener.onCameraClosed();
-            }
         }
 
         @Override
@@ -275,14 +271,11 @@ public class Camera2Presenter {
     }
 
     public synchronized void stop() {
-        if (mCameraDevice == null) {
-            return;
-        }
         closeCamera();
         stopBackgroundThread();
     }
 
-    public void release() {
+    public synchronized void release() {
         stop();
         mTextureView = null;
         mCamera2Listener = null;
@@ -372,7 +365,7 @@ public class Camera2Presenter {
             if (setUpCameraOutputs(cameraManager)) {
                 configureTransform(mTextureView.getWidth(), mTextureView.getHeight());
                 cameraManager.openCamera(mCameraId, mDeviceStateCallback, mBackgroundHandler);
-            }else {
+            } else {
                 mCameraOpenCloseLock.release();
             }
         } catch (CameraAccessException | SecurityException | IllegalArgumentException exception) {
@@ -396,18 +389,15 @@ public class Camera2Presenter {
         try {
             mCameraOpenCloseLock.acquire();
 
-            closeCameraSession();
-
             if (null != mOutputProvider) {
                 mOutputProvider.onDetach();
                 mOutputProvider = null;
             }
 
+            closeCameraSession();
+
             closeCameraDevice();
 
-            if (mCamera2Listener != null) {
-                mCamera2Listener.onCameraClosed();
-            }
         } catch (InterruptedException e) {
             if (mCamera2Listener != null) {
                 mCamera2Listener.onCameraError(e);
@@ -560,6 +550,9 @@ public class Camera2Presenter {
         if (null != mCameraDevice) {
             mCameraDevice.close();
             mCameraDevice = null;
+            if (mCamera2Listener != null) {
+                mCamera2Listener.onCameraClosed();
+            }
         }
     }
 
