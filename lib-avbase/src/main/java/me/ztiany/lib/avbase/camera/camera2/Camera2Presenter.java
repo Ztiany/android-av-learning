@@ -270,16 +270,16 @@ public class Camera2Presenter {
         }
     }
 
-    public synchronized void stop() {
-        closeCamera();
-        stopBackgroundThread();
-    }
-
     public synchronized void release() {
         stop();
         mTextureView = null;
         mCamera2Listener = null;
         mContext = null;
+    }
+
+    public synchronized void stop() {
+        closeCamera();
+        stopBackgroundThread();
     }
 
     private boolean setUpCameraOutputs(CameraManager cameraManager) {
@@ -389,12 +389,12 @@ public class Camera2Presenter {
         try {
             mCameraOpenCloseLock.acquire();
 
+            closeCameraSession();
+
             if (null != mOutputProvider) {
                 mOutputProvider.onDetach();
                 mOutputProvider = null;
             }
-
-            closeCameraSession();
 
             closeCameraDevice();
 
@@ -411,6 +411,8 @@ public class Camera2Presenter {
      * Starts a background thread and its {@link Handler}.
      */
     private void startBackgroundThread() {
+        stopBackgroundThread();
+
         mBackgroundThread = new HandlerThread("CameraBackground");
         mBackgroundThread.start();
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
@@ -420,6 +422,9 @@ public class Camera2Presenter {
      * Stops the background thread and its {@link Handler}.
      */
     private void stopBackgroundThread() {
+        if (mBackgroundThread == null) {
+            return;
+        }
         mBackgroundThread.quitSafely();
         try {
             mBackgroundThread.join();
